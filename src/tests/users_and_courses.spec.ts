@@ -19,13 +19,13 @@ describe("User and Courses", () => {
     const createUser = {
         firstName: "Kenzie",
         lastName: "Kenzinho",
-        email: "tecooba@mail.com",
+        email: "kenzie@mail.com",
         password: "123456",
         isAdm: true
     }
 
     const login = {
-        email: "tecooba@mail.com",
+        email: "kenzie@mail.com",
         password: "123456"
     }
 
