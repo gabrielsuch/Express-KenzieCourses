@@ -1,4 +1,4 @@
-import hbs from "nodemailer-express-handlebars"
+import hbs, { NodemailerExpressHandlebarsOptions } from "nodemailer-express-handlebars"
 import path from "path"
 import transporter from "../config/mailer.config"
 
@@ -9,12 +9,12 @@ const sendEmail = (user: IUser, course: ICourse) => {
     const options = {
         viewEngine: {
             partialsDir: path.resolve("./src/views"),
-            defaultLayout: undefined
+            defaultLayout: false
         },
         viewPath: path.resolve("./src/views")
     }
 
-    transporter.use("compile", hbs(options))
+    transporter.use("compile", hbs(options as any))
 
     const mailOptions = {
         from: String(process.env.NODEMAILER_USER),

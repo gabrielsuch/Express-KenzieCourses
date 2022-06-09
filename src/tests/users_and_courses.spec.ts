@@ -1,16 +1,15 @@
-import app from "../../app"
+import app from "../app"
 import supertest from "supertest"
-import request from "supertest"
 import {DataSource} from "typeorm"
-import AppDataSource from "../../data-source"
+import AppDataSource from "../data-source"
 import {Request, Response, NextFunction} from "express"
 
-import { validateToken } from "../../middlewares"
+import { validateToken, verifyPermission} from "../middlewares"
+import { Console } from "console"
 
-import jwt from "jsonwebtoken"
 
 
-describe("Create User Test", () => {
+describe("User and Courses", () => {
     const mockReq: Partial<Request> = {}
     const _: Partial<Response> = {}
     const nextFunc: NextFunction = jest.fn
@@ -20,13 +19,13 @@ describe("Create User Test", () => {
     const createUser = {
         firstName: "Kenzie",
         lastName: "Kenzinho",
-        email: "blabla@mail.com",
+        email: "tecooba@mail.com",
         password: "123456",
         isAdm: true
     }
 
     const login = {
-        email: "blabla@mail.com",
+        email: "tecooba@mail.com",
         password: "123456"
     }
 
@@ -68,7 +67,7 @@ describe("Create User Test", () => {
     })
 
     it("Should be able to return All Users | Status 200 - OK", async () => {
-        const response = await request(app).get("/users").set('Authorization', `Bearer ${token}`)
+        const response = await supertest(app).get("/users").set('Authorization', `Bearer ${token}`)
 
         mockReq.headers = {
             authorization: `Token ${token}`
@@ -80,7 +79,7 @@ describe("Create User Test", () => {
         expect(response.statusCode).toBe(200)
     })
 
-    it("Should be able to update a User", async () => {
+    it("Should be able to Update a User | Status 200 - OK", async () => {
         const response = await supertest(app).patch(`/users/${mockReq.decoded.id}`).set("Authorization", `Bearer ${token}`).send({
             firstName: "Mudou o primeiro nome",
             lastName: "Mudou o último nome"
@@ -98,7 +97,7 @@ describe("Create User Test", () => {
         expect(response.body).toHaveProperty("lastName", "Mudou o último nome")
     })
 
-    it("Should be able to Get User by ID", async () => {
+    it("Should be able to Get User by ID | Status 200 - OK", async () => {
         const response = await supertest(app).get(`/users/${mockReq.decoded.id}`).set("Authorization", `Bearer ${token}`)
 
         mockReq.headers = {
@@ -109,5 +108,62 @@ describe("Create User Test", () => {
 
         expect(mockReq).toHaveProperty("decoded")
         expect(response.statusCode).toBe(200)
+    })
+
+    it("Should be able to Get All Courses | Status 200 - OK", async () => {
+        const response = await supertest(app).get("/courses").set("Authorization", `Bearer ${token}`)
+
+        mockReq.headers = {
+            authorization: `Token ${token}`
+        }
+        
+        validateToken(mockReq as Request, _ as Response, nextFunc)
+
+        expect(mockReq).toHaveProperty("decoded")
+        expect(response.statusCode).toBe(200)
+    })
+
+    it("Should be able to Create Course | Status 201 - Created", async () => {
+        const values = {
+            courseName: "Programação",
+            duration: "3000h"
+        }
+
+        const response = await supertest(app).post("/courses").send({...values}).set("Authorization", `Bearer ${token}`)
+
+        mockReq.headers = {
+            authorization: `Token ${token}`
+        }
+        
+        mockReq.body = {
+            courseId: response.body.id
+        }
+
+        validateToken(mockReq as Request, _ as Response, nextFunc)
+
+        expect(mockReq.body).toHaveProperty("courseId")
+        expect(response.statusCode).toBe(201)
+    })
+
+    it("Should be able to Update Course | Status 200 - OK", async () => {
+        const values = {
+            duration: "5000h"
+        }
+
+        const response = await supertest(app).patch(`/courses/${mockReq.body.courseId}`).send({...values}).set("Authorization", `Bearer ${token}`)
+
+        validateToken(mockReq as Request, _ as Response, nextFunc)
+
+        expect(response.body).toHaveProperty("duration", "5000h")
+        expect(response.statusCode).toBe(200)
+    })
+
+    it("Should be able to Add Course to Logged User | Status 201 - Created", async () => {
+        const response = await supertest(app).post(`/courses/${mockReq.body.courseId}/users`).set("Authorization", `Bearer ${token}`)
+
+        validateToken(mockReq as Request, _ as Response, nextFunc)
+
+        expect(response.body).toHaveProperty("message")
+        expect(response.statusCode).toBe(201)
     })
 })
