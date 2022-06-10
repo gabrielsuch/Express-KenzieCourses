@@ -1,4 +1,4 @@
-import hbs, { NodemailerExpressHandlebarsOptions } from "nodemailer-express-handlebars"
+import hbs from "nodemailer-express-handlebars"
 import path from "path"
 import transporter from "../config/mailer.config"
 
@@ -18,7 +18,7 @@ const sendEmail = (user: IUser, course: ICourse) => {
 
     const mailOptions = {
         from: String(process.env.NODEMAILER_USER),
-        to: "auhuheuhew@gmail.com",
+        to: user.email,
         subject: "Inscrição no Curso",
         template: "email",
         context: {

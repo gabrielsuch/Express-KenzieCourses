@@ -4,8 +4,7 @@ import {DataSource} from "typeorm"
 import AppDataSource from "../data-source"
 import {Request, Response, NextFunction} from "express"
 
-import { validateToken, verifyPermission} from "../middlewares"
-import { Console } from "console"
+import { validateToken } from "../middlewares"
 
 
 
@@ -14,7 +13,7 @@ describe("User and Courses", () => {
     const _: Partial<Response> = {}
     const nextFunc: NextFunction = jest.fn
 
-    let token = ""
+    // PARA FAZER TESTES COM O USUARIO NÃO ADM, É SO MUDAR A CHAVE isAdm, E TROCAR AS CREDENCIAIS DO LOGIN
 
     const createUser = {
         firstName: "Kenzie",
@@ -60,18 +59,16 @@ describe("User and Courses", () => {
     it("Should be able to Login | Status 200 - OK", async () => {
         const response = await supertest(app).post("/login").send({...login})
 
-        token = response.body.token
+        mockReq.headers = {
+            authorization: `Token ${response.body.token}`
+        }
 
         expect(response.statusCode).toBe(200)
         expect(response.body).toHaveProperty("token")
     })
 
     it("Should be able to return All Users | Status 200 - OK", async () => {
-        const response = await supertest(app).get("/users").set('Authorization', `Bearer ${token}`)
-
-        mockReq.headers = {
-            authorization: `Token ${token}`
-        }
+        const response = await supertest(app).get("/users").set('Authorization', `Bearer ${mockReq.headers.authorization?.split(" ")[1]}`)
 
         validateToken(mockReq as Request, _ as Response, nextFunc)
 
@@ -80,14 +77,10 @@ describe("User and Courses", () => {
     })
 
     it("Should be able to Update a User | Status 200 - OK", async () => {
-        const response = await supertest(app).patch(`/users/${mockReq.decoded.id}`).set("Authorization", `Bearer ${token}`).send({
+        const response = await supertest(app).patch(`/users/${mockReq.decoded.id}`).set("Authorization", `Bearer ${mockReq.headers.authorization?.split(" ")[1]}`).send({
             firstName: "Mudou o primeiro nome",
             lastName: "Mudou o último nome"
         })
-
-        mockReq.headers = {
-            authorization: `Token ${token}`
-        }
         
         validateToken(mockReq as Request, _ as Response, nextFunc)
 
@@ -98,11 +91,7 @@ describe("User and Courses", () => {
     })
 
     it("Should be able to Get User by ID | Status 200 - OK", async () => {
-        const response = await supertest(app).get(`/users/${mockReq.decoded.id}`).set("Authorization", `Bearer ${token}`)
-
-        mockReq.headers = {
-            authorization: `Token ${token}`
-        }
+        const response = await supertest(app).get(`/users/${mockReq.decoded.id}`).set("Authorization", `Bearer ${mockReq.headers.authorization?.split(" ")[1]}`)
         
         validateToken(mockReq as Request, _ as Response, nextFunc)
 
@@ -111,12 +100,8 @@ describe("User and Courses", () => {
     })
 
     it("Should be able to Get All Courses | Status 200 - OK", async () => {
-        const response = await supertest(app).get("/courses").set("Authorization", `Bearer ${token}`)
+        const response = await supertest(app).get("/courses").set("Authorization", `Bearer ${mockReq.headers.authorization?.split(" ")[1]}`)
 
-        mockReq.headers = {
-            authorization: `Token ${token}`
-        }
-        
         validateToken(mockReq as Request, _ as Response, nextFunc)
 
         expect(mockReq).toHaveProperty("decoded")
@@ -129,12 +114,8 @@ describe("User and Courses", () => {
             duration: "3000h"
         }
 
-        const response = await supertest(app).post("/courses").send({...values}).set("Authorization", `Bearer ${token}`)
+        const response = await supertest(app).post("/courses").send({...values}).set("Authorization", `Bearer ${mockReq.headers.authorization?.split(" ")[1]}`)
 
-        mockReq.headers = {
-            authorization: `Token ${token}`
-        }
-        
         mockReq.body = {
             courseId: response.body.id
         }
@@ -150,7 +131,7 @@ describe("User and Courses", () => {
             duration: "5000h"
         }
 
-        const response = await supertest(app).patch(`/courses/${mockReq.body.courseId}`).send({...values}).set("Authorization", `Bearer ${token}`)
+        const response = await supertest(app).patch(`/courses/${mockReq.body.courseId}`).send({...values}).set("Authorization", `Bearer ${mockReq.headers.authorization?.split(" ")[1]}`)
 
         validateToken(mockReq as Request, _ as Response, nextFunc)
 
@@ -159,7 +140,7 @@ describe("User and Courses", () => {
     })
 
     it("Should be able to Add Course to Logged User | Status 201 - Created", async () => {
-        const response = await supertest(app).post(`/courses/${mockReq.body.courseId}/users`).set("Authorization", `Bearer ${token}`)
+        const response = await supertest(app).post(`/courses/${mockReq.body.courseId}/users`).set("Authorization", `Bearer ${mockReq.headers.authorization?.split(" ")[1]}`)
 
         validateToken(mockReq as Request, _ as Response, nextFunc)
 
